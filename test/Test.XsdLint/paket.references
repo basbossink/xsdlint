@@ -1,2 +1,4 @@
 FsUnit.xUnit
 FsCheck.xUnit
+Microsoft.NET.Test.Sdk
+xunit.runner.visualstudio
