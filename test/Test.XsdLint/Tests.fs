@@ -5,7 +5,7 @@ open FsUnit.Xunit
 open XsdLint.Types
 open XsdLint.Validate
 
-let optionalElemntEndingInId () =
+let optionalElemntEndingInId() =
     (StarElement
         ({ Element = XsElement
            Location =
@@ -19,7 +19,8 @@ let optionalElemntEndingInId () =
              Location =
                  { Line = 37u
                    Column = 58u } } ], []))
-let expectedIdShouldBeRequired () =
+
+let expectedIdShouldBeRequired() =
     [ { Location =
             { Line = 37u
               Column = 58u }
@@ -30,8 +31,10 @@ let expectedIdShouldBeRequired () =
 
 [<Fact>]
 let `` Elements with a name ending with Id should be required test``() =
-    let actual = optionalElemntEndingInId () |> validate
-    actual |> should equal <| expectedIdShouldBeRequired ()
+    let actual = optionalElemntEndingInId() |> validate
+    actual
+    |> should equal
+    <| expectedIdShouldBeRequired()
 
 [<Fact>]
 let `` Elements with a name ending with Id nested somewhere in the document should be required test``() =
@@ -40,10 +43,9 @@ let `` Elements with a name ending with Id nested somewhere in the document shou
             ({ Element = XsComplexType
                Location =
                    { Line = 3u
-                     Column = 45u } },
-               [],
-               [ optionalElemntEndingInId () ]))
+                     Column = 45u } }, [], [ optionalElemntEndingInId() ]))
 
     let actual = validate input
-    actual |> should equal <| expectedIdShouldBeRequired ()
-
+    actual
+    |> should equal
+    <| expectedIdShouldBeRequired()
