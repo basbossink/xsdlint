@@ -18,7 +18,16 @@ let isNameEndingWithId (attribute: AttributeLocation): string option =
 
 let nameEndsWithId (attributes: Attributes): string list = attributes |> List.choose isNameEndingWithId
 
-let validateFragments (fragemnts: Schema list) (messages: ValidationMessage list) = messages
+let buildIdShouldBeRequired (name: string) (lopt: Location): ValidationMessage =
+    { RuleIdentifier = RuleIdentifier.IdShouldBeRequired
+      Location = lopt
+      Severity = Severity.Warning
+      Message = sprintf "Entity '%s' has a name ending with 'Id', hence it should be required." name }
+
+let consIdShouldBeRequired (attrs: Attributes) (messages: ValidationMessage list): ValidationMessage list =
+    match (nameEndsWithId attrs, isOptional attrs) with
+    | ([ name ], [ lopt ]) -> (buildIdShouldBeRequired name lopt) :: messages
+    | _ -> messages
 
 let rec validateStartElement
         (startElement: ElementLocation * Attributes * Schema list)
@@ -26,19 +35,13 @@ let rec validateStartElement
         : ValidationMessage list
     =
     match startElement with
-    | ({ Element = XsElement; Location = l }, attrs, rest) ->
-        match (nameEndsWithId attrs, isOptional attrs) with
-        | ([ name ], [ lopt ]) ->
-            validateFragments rest
-                (({ RuleIdentifier = RuleIdentifier.IdShouldBeRequired
-                    Location = lopt
-                    Severity = Severity.Warning
-                    Message = sprintf "Entity '%s' has a name ending with 'Id', hence it should be required." name })
-                 :: messages)
-        | _ -> validateFragments rest messages
-    | (_, _, rest) -> validateFragments rest messages
+    | ({ Element = XsElement; Location = _ }, attrs, rest) ->
+        rest |> List.fold (fun m s -> validateFragment s m) (consIdShouldBeRequired attrs messages)
+    | (_, _, rest) -> rest |> List.fold (fun m s -> validateFragment s m) messages
 
-let validate (schema: Schema): ValidationMessage list =
+and validateFragment (schema: Schema) (messages: ValidationMessage list): ValidationMessage list =
     match schema with
     | StarElement e -> validateStartElement e []
     | _ -> []
+
+let validate (schema: Schema): ValidationMessage list = validateFragment schema []
